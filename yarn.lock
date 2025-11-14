@@ -212,6 +212,14 @@
     pako "^2.0.4"
     uuid "^9.0.0"
 
+"@cornerstonejs/streaming-image-volume-loader@^1.77.12":
+  version "1.86.1"
+  resolved "https://registry.npmmirror.com/@cornerstonejs/streaming-image-volume-loader/-/streaming-image-volume-loader-1.86.1.tgz#02aa986b1a2a1998e40a1e832321f3173593c758"
+  integrity sha512-AOn285RnnRnBv2fMg8dFQTq80LAXXAGKqmtlAdhpZbh19B+NTKUKhRVOBUnvrgz4VhlsKx0ibYn9ztEx+18P2g==
+  dependencies:
+    "@cornerstonejs/core" "^1.86.0"
+    comlink "^4.4.1"
+
 "@cornerstonejs/tools@^1.11.1":
   version "1.86.1"
   resolved "https://registry.npmmirror.com/@cornerstonejs/tools/-/tools-1.86.1.tgz#6939f90f30ed2221115f6dd8263587acf90c845f"
@@ -1055,9 +1063,9 @@ balanced-match@^1.0.0:
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
 baseline-browser-mapping@^2.8.25:
-  version "2.8.27"
-  resolved "https://registry.npmmirror.com/baseline-browser-mapping/-/baseline-browser-mapping-2.8.27.tgz#d15ab8face053137f8eb4c028455024787515d5d"
-  integrity sha512-2CXFpkjVnY2FT+B6GrSYxzYf65BJWEqz5tIRHCvNsZZ2F3CmsCB37h8SpYgKG7y9C4YAeTipIPWG7EmFmhAeXA==
+  version "2.8.28"
+  resolved "https://registry.npmmirror.com/baseline-browser-mapping/-/baseline-browser-mapping-2.8.28.tgz#9ef511f5a7c19d74a94cafcbf951608398e9bdb3"
+  integrity sha512-gYjt7OIqdM0PcttNYP2aVrr2G0bMALkBaoehD4BuRGjAOtipg0b6wHg1yNL+s5zSnLZZrGHOw4IrND8CD+3oIQ==
 
 big.js@^5.2.2:
   version "5.2.2"
@@ -2072,9 +2080,9 @@ react-refresh@^0.18.0:
   integrity sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==
 
 react-router@^7.9.5:
-  version "7.9.5"
-  resolved "https://registry.npmmirror.com/react-router/-/react-router-7.9.5.tgz#68722186b4c9f42be36e658d9fe5d62ac1e0808b"
-  integrity sha512-JmxqrnBZ6E9hWmf02jzNn9Jm3UqyeimyiwzD69NjxGySG6lIz/1LVPsoTCwN7NBX2XjCEa1LIX5EMz1j2b6u6A==
+  version "7.9.6"
+  resolved "https://registry.npmmirror.com/react-router/-/react-router-7.9.6.tgz#003c8de335fdd7390286a478dcfd9579c1826137"
+  integrity sha512-Y1tUp8clYRXpfPITyuifmSoE2vncSME18uVLgaqyxh9H35JWpIfzHo+9y3Fzh5odk/jxPW29IgLgzcdwxGqyNA==
   dependencies:
     cookie "^1.0.1"
     set-cookie-parser "^2.6.0"
@@ -2275,6 +2283,11 @@ supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmmirror.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
+
+tailwind-merge@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.npmmirror.com/tailwind-merge/-/tailwind-merge-3.4.0.tgz#5a264e131a096879965f1175d11f8c36e6b64eca"
+  integrity sha512-uSaO4gnW+b3Y2aWoWfFpX62vn2sR3skfhbjsEnaBI81WD1wBLlHZe5sWf0AqjksNdYTbGBEd0UasQMT3SNV15g==
 
 tailwindcss@4.1.17, tailwindcss@^4.1.17:
   version "4.1.17"

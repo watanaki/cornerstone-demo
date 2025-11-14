@@ -12,6 +12,7 @@
   "dependencies": {
     "@cornerstonejs/core": "^1.11.1",
     "@cornerstonejs/dicom-image-loader": "^1.77.12",
+    "@cornerstonejs/streaming-image-volume-loader": "^1.77.12",
     "@cornerstonejs/tools": "^1.11.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -28,6 +29,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.3",

@@ -8,9 +8,12 @@ type Props = {
 
 const NaviButton = ({ route, text }: Props) => {
   return (
-    <button className='bg-amber-200 border-2 p-2 rounded-2xl'>
-      <Link to={route}>{text}</Link>
-    </button>
+    <Link
+      to={route}
+      className="p-2 bg-amber-100 rounded-2xl border-2 mb-2 inline-block hover:bg-amber-200 transition-colors"
+    >
+      {text}
+    </Link>
   )
 }
 

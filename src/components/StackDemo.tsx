@@ -4,6 +4,7 @@ import {
 } from '@cornerstonejs/core';
 import { useEffect, useRef } from 'react';
 import { getRenderEngine, initCornerstone } from '../tools';
+import DemoWrapper from './DemoWrapper';
 const { ViewportType } = Enums;
 
 // 先测试单个图像
@@ -48,12 +49,14 @@ const StackDemo = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full gap-4">
-      <div className="">DICOM 单图像查看器</div>
-      <div className='flex gap-4'>
-        <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
+    <DemoWrapper>
+      <div className='flex flex-col gap-4'>
+        <div className="text-center">DICOM 单图像查看器</div>
+        <div className='flex gap-4'>
+          <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
+        </div>
       </div>
-    </div>
+    </DemoWrapper>
   );
 }
 
