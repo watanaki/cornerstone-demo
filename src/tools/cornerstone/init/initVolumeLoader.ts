@@ -4,7 +4,7 @@ import {
   cornerstoneStreamingDynamicImageVolumeLoader,
 } from '@cornerstonejs/streaming-image-volume-loader';
 
-export default function initVolumeLoader() {
+export const initVolumeLoader = () => {
   volumeLoader.registerUnknownVolumeLoader(
     cornerstoneStreamingImageVolumeLoader
   );

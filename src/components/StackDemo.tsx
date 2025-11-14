@@ -14,40 +14,75 @@ const imageIds = [
 
 const viewportId = 'CT_AXIAL_STACK';
 
+import { init as initCore } from '@cornerstonejs/core';
+import { init as initDicomImageLoader } from '@cornerstonejs/dicom-image-loader';
+
+
+import { getRenderingEngine, RenderingEngine } from "@cornerstonejs/core";
+
+
+
 const StackDemo = () => {
   const a = useRef<HTMLDivElement>(null);
 
+  // useEffect(() => {
+  //   const init = async () => {
+  //     await initCornerstone();
+  //     const renderingEngine = getRenderEngine();
+
+  //     if (!a.current) {
+  //       console.error('容器元素未找到');
+  //       return;
+  //     }
+  //     const viewportInput = {
+  //       viewportId,
+  //       element: a.current,
+  //       type: ViewportType.STACK,
+  //     };
+
+  //     console.log('设置 viewport...');
+  //     renderingEngine.enableElement(viewportInput)
+
+  //     const viewport = renderingEngine.getViewport(viewportId) as Types.IStackViewport;
+
+  //     viewport.setStack(imageIds);
+
+  //     // 等待图像加载后再渲染
+  //     setTimeout(() => {
+  //       viewport.resetCamera(); // 重置相机让图像适配视口
+  //       viewport.render();
+  //       console.log('✅ 图像渲染完成!');
+  //     }, 100);
+  //   }
+
+  //   init();
+  // }, []);
   useEffect(() => {
     const init = async () => {
-      await initCornerstone();
+      await initCore();
+      await initDicomImageLoader();
+      const renderingEngineId = 'myRenderingEngine';
+      const renderingEngine = new RenderingEngine(renderingEngineId);
+      const viewportId = 'CT_AXIAL_STACK';
 
-      const renderingEngine = getRenderEngine();
+      if (!a.current) return;
 
-      if (!a.current) {
-        console.error('容器元素未找到');
-        return;
-      }
       const viewportInput = {
         viewportId,
         element: a.current,
-        type: ViewportType.STACK,
+        type: Enums.ViewportType.STACK,
       };
 
-      console.log('设置 viewport...');
-      renderingEngine.enableElement(viewportInput)
+      renderingEngine.enableElement(viewportInput);
 
       const viewport = renderingEngine.getViewport(viewportId) as Types.IStackViewport;
+
       viewport.setStack(imageIds);
 
-      console.log('渲染图像...');
       viewport.render();
-
-      console.log('✅ 图像渲染完成!');
     }
-
     init();
   }, []);
-
   return (
     <DemoWrapper>
       <div className='flex flex-col gap-4'>

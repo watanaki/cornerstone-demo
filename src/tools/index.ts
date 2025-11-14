@@ -1,1 +1,1 @@
-export * from "./cornerstoneTools";
+export * from "./cornerstone";
