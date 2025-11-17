@@ -1,7 +1,7 @@
 import { init as initCore } from '@cornerstonejs/core';
 import { init as initDicomImageLoader } from '@cornerstonejs/dicom-image-loader';
 import { getRenderEngine } from './createRenderEngine';
-// import { initVolumeLoader } from './initVolumeLoader';
+import { initVolumeLoader } from './initVolumeLoader';
 
 interface InitOptions {
   initVolumeLoader?: boolean;
@@ -18,8 +18,7 @@ export const initCornerstone = async (options?: InitOptions) => {
   getRenderEngine();
 
   if (options?.initVolumeLoader) {
-    // initVolumeLoader();
-    console.log('Volume loader 初始化 (暂未实现)');
+    initVolumeLoader();
   }
 
   console.log('Cornerstone 初始化完成');
