@@ -2,9 +2,10 @@ import {
   Enums,
   RenderingEngine,
   setVolumesForViewports,
-  type Types,
+  utilities,
   volumeLoader,
 } from '@cornerstonejs/core';
+import type { Types } from '@cornerstonejs/core'
 import { useCallback, useEffect, useRef } from 'react';
 import { getRenderEngine, initCornerstone, imageIds } from '../tools';
 import DemoWrapper from './DemoWrapper';
@@ -74,25 +75,51 @@ const ConvertViewportDemo = () => {
     init();
   }, []);
 
-  const convertViewport = useCallback((type: 'stack' | 'volume') => {
+  const convertViewport = useCallback(async (type: 'stack' | 'volume') => {
     if (!renderingEngine.current) {
       return console.warn("No renderEngine!");
     }
 
     const viewport = renderingEngine.current.getViewport(viewportId);
 
+    let newViewport;
     if (type === 'volume') {
       // Stack -> Volume
-      if (viewport.type === Enums.ViewportType.VOLUME_3D) {
+      if (viewport.type === Enums.ViewportType.ORTHOGRAPHIC) {
         return console.warn("Already Volume viewport");
       }
-      stack2Volume(renderingEngine.current, viewport as IStackViewport, 'sss');
+
+      console.log('开始转换 Stack -> Volume...');
+      try {
+        newViewport = await utilities.convertStackToVolumeViewport({
+          viewport: viewport as Types.IStackViewport,
+          options: {
+            volumeId: "cornerstoneStreamingImageVolume:convert_volume",
+            background: [0, 0.4, 0] as Types.Point3,
+          }
+        });
+
+        if (newViewport) {
+          newViewport.setOrientation(Enums.OrientationAxis.SAGITTAL);
+          newViewport.resetCamera();
+          newViewport.render();
+        }
+        console.log('✅ 转换成功');
+      } catch (err) {
+        console.error('❌ 转换失败:', err);
+      }
+      // stack2Volume(renderingEngine.current, viewport as IStackViewport, 'sss');
     } else {
       // Volume -> Stack
       if (viewport.type === Enums.ViewportType.STACK) {
         return console.warn("Already Stack viewport");
       }
-      console.log("转换为 Stack（待实现）");
+      newViewport = await utilities.convertVolumeToStackViewport({
+        viewport: viewport as Types.IVolumeViewport,
+        options: {
+          background: [0.4, 0.0, 0.4],
+        },
+      });
     }
   }, []);
 

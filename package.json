@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@cornerstonejs/core": "^2.19.16",
-    "@cornerstonejs/dicom-image-loader": "2.19.16",
+    "@cornerstonejs/dicom-image-loader": "^2.19.16",
     "@cornerstonejs/tools": "^2.19.16",
     "dicom-parser": "1.8.21",
     "react": "^19.2.0",

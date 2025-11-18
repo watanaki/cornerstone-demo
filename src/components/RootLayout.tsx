@@ -6,6 +6,7 @@ const RootLayout = () => {
       <NaviButton route='stackDemo' text='Stack Demo' />
       <NaviButton route='volumeDemo' text='Volume Demo' />
       <NaviButton route='convertViewport' text='Convert Viewport Demo' />
+      <NaviButton route='metadataChecker' text='🔍 DICOM Metadata Checker' />
     </div>
   )
 }

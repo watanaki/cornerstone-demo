@@ -1,5 +1,5 @@
 import { getRenderEngine, initCornerstone, imageIds } from "@/tools";
-import { Enums, volumeLoader, type Types, imageLoader } from "@cornerstonejs/core";
+import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@cornerstonejs/core";
 import { ViewportType } from "@cornerstonejs/core/enums";
 import { useEffect, useRef } from "react";
 import DemoWrapper from "./DemoWrapper";
@@ -12,12 +12,14 @@ const VolumeDemo = () => {
   const a = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const init = async () => {
       await initCornerstone({ initVolumeLoader: true });
       const renderingEngine = getRenderEngine();
 
-      if (!a.current) {
-        console.error('容器元素未找到');
+      if (!a.current || !mounted) {
+        console.error('容器元素未找到或组件已卸载');
         return;
       }
 
@@ -36,7 +38,29 @@ const VolumeDemo = () => {
       const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
 
       try {
-        console.log(`🔄 开始创建 Volume，共 ${imageIds.length} 张图像...`);
+        // console.log(`🔄 预加载并排序图像...`);
+
+        // // 预加载所有图像并获取Z轴位置
+        // const imagesWithPosition = await Promise.all(
+        //   imageIds.map(async (imageId) => {
+        //     await imageLoader.loadAndCacheImage(imageId);
+        //     const imagePlaneModule = metaData.get('imagePlaneModule', imageId);
+        //     return {
+        //       imageId,
+        //       position: imagePlaneModule?.imagePositionPatient?.[2] || 0,
+        //     };
+        //   })
+        // );
+
+        // // 按Z轴位置排序
+        // imagesWithPosition.sort((a, b) => a.position - b.position);
+        // const sortedImageIds = imagesWithPosition.map(item => item.imageId);
+
+        // console.log('✅ 图像已按位置排序');
+        // console.log('Z轴位置范围:', {
+        //   min: imagesWithPosition[0].position,
+        //   max: imagesWithPosition[imagesWithPosition.length - 1].position,
+        // });
 
         const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
 
@@ -61,6 +85,14 @@ const VolumeDemo = () => {
         // Render the image
         viewport.render();
         console.log('✅ 渲染完成!');
+
+        // 检查画布状态
+        const canvas = viewport.canvas;
+        console.log('🖼️ Canvas 状态:', {
+          width: canvas.width,
+          height: canvas.height,
+          style: canvas.style.cssText,
+        });
       } catch (err) {
         console.error("❌ Volume 创建/加载失败:");
         console.error(err);
@@ -71,6 +103,10 @@ const VolumeDemo = () => {
     }
 
     init();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

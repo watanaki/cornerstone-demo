@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 // import { VolumeDemo } from '../components';
-import { VolumeDemo, RootLayout, StackDemo, ConvertViewPortDemo } from '@components';
+import { VolumeDemo, RootLayout, StackDemo, ConvertViewPortDemo, DicomMetadataChecker } from '@components';
 
 const router = createBrowserRouter([
   {
@@ -18,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: '/convertViewport',
     element: <ConvertViewPortDemo />
+  },
+  {
+    path: '/metadataChecker',
+    element: <DicomMetadataChecker />
   }
 ]);
 

@@ -27,7 +27,7 @@ const StackDemo = () => {
 
       const viewport = renderingEngine.getViewport(viewportId) as Types.IStackViewport;
 
-      await viewport.setStack(imageIds, 20);
+      await viewport.setStack(imageIds);
       viewport.resetCamera();
       viewport.render();
     }
