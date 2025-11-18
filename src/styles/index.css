@@ -6,3 +6,13 @@ body,
   height: 100%;
   width: 100%;
 }
+
+@layer base {
+  .baseBtn {
+    border: 1;
+    border-radius: 1rem;
+    background-color: rgb(254 243 199);
+    border-width: 1px;
+    cursor: pointer;
+  }
+}

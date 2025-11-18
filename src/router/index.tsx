@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
 // import { VolumeDemo } from '../components';
-import { VolumeDemo, RootLayout, StackDemo } from '@components';
+import { VolumeDemo, RootLayout, StackDemo, ConvertViewPortDemo } from '@components';
 
 const router = createBrowserRouter([
   {
@@ -14,6 +14,10 @@ const router = createBrowserRouter([
   {
     path: '/stackDemo',
     element: <StackDemo />
+  },
+  {
+    path: '/convertViewport',
+    element: <ConvertViewPortDemo />
   }
 ]);
 

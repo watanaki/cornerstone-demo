@@ -1,30 +1,8 @@
-import { getRenderEngine, initCornerstone } from "@/tools";
-import { Enums, volumeLoader, type Types } from "@cornerstonejs/core";
+import { getRenderEngine, initCornerstone, imageIds } from "@/tools";
+import { Enums, volumeLoader, type Types, imageLoader } from "@cornerstonejs/core";
 import { ViewportType } from "@cornerstonejs/core/enums";
 import { useEffect, useRef } from "react";
 import DemoWrapper from "./DemoWrapper";
-
-const prefix = "wadouri";
-const path = "http://192.168.1.47:3011/receive/1.3";
-const names = [
-  "IMG-0004-00007.dcm",
-  "IMG-0004-00008.dcm",
-  "IMG-0004-00009.dcm",
-  "IMG-0004-00010.dcm",
-  "IMG-0004-00011.dcm",
-  "IMG-0004-00012.dcm",
-  "IMG-0004-00013.dcm",
-  "IMG-0004-00014.dcm",
-  "IMG-0004-00015.dcm",
-  "IMG-0004-00016.dcm",
-  "IMG-0004-00017.dcm",
-  "IMG-0004-00018.dcm",
-  "IMG-0004-00019.dcm",
-  "IMG-0004-00020.dcm",
-  "IMG-0004-00021.dcm",
-  "IMG-0004-00022.dcm"
-];
-const imageIds = names.map(name => `${prefix}:${path}/${name}`);
 
 // const { ViewportType } = Enums;
 const viewportId = 'myVolume';
@@ -49,7 +27,7 @@ const VolumeDemo = () => {
         element: a.current,
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
-          orientation: Enums.OrientationAxis.CORONAL,
+          orientation: Enums.OrientationAxis.AXIAL,
           // background: [0.2, 0, 0.2] as Types.Point3,
         },
       };
@@ -58,11 +36,12 @@ const VolumeDemo = () => {
       const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
 
       try {
-        console.log('🔄 开始创建 Volume，共 ${imageIds.length} 张图像...');
+        console.log(`🔄 开始创建 Volume，共 ${imageIds.length} 张图像...`);
+
         const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
 
         console.log('🔄 开始加载图像数据...');
-        volume.load();
+        await volume.load();
         console.log('✅ Volume 加载完成!');
         console.log('📊 Volume 信息:', {
           dimensions: volume.dimensions,
