@@ -3,10 +3,36 @@ import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@corners
 import { ViewportType } from "@cornerstonejs/core/enums";
 import { useEffect, useRef } from "react";
 import DemoWrapper from "./DemoWrapper";
+import { addTool, StackScrollTool, ToolGroupManager } from "@cornerstonejs/tools";
+import { MouseBindings } from "@cornerstonejs/tools/enums";
 
 // const { ViewportType } = Enums;
 const viewportId = 'myVolume';
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
+
+const setTools = (renderingEngineId: string) => {
+  addTool(StackScrollTool);
+
+  const toolGroupId = "myToolGroup";
+
+  // 检查工具组是否已存在，避免重复创建
+  let toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
+  if (!toolGroup) {
+    toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
+  }
+
+  toolGroup?.addTool(StackScrollTool.toolName);
+
+  toolGroup?.addViewport(viewportId, renderingEngineId);
+
+  toolGroup?.setToolActive(StackScrollTool.toolName, {
+    bindings: [
+      {
+        mouseButton: MouseBindings.Wheel,
+      },
+    ],
+  });
+}
 
 const VolumeDemo = () => {
   const a = useRef<HTMLDivElement>(null);
@@ -15,7 +41,7 @@ const VolumeDemo = () => {
     let mounted = true;
 
     const init = async () => {
-      await initCornerstone({ initVolumeLoader: true });
+      await initCornerstone({ initVolumeLoader: true, initTools: true });
       const renderingEngine = getRenderEngine();
 
       if (!a.current || !mounted) {
@@ -30,7 +56,7 @@ const VolumeDemo = () => {
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
           orientation: Enums.OrientationAxis.AXIAL,
-          // background: [0.2, 0, 0.2] as Types.Point3,
+          background: [0.2, 0, 0.2] as Types.Point3,
         },
       };
       renderingEngine.enableElement(viewportInput);
@@ -38,29 +64,29 @@ const VolumeDemo = () => {
       const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
 
       try {
-        // console.log(`🔄 预加载并排序图像...`);
+        /** console.log(`🔄 预加载并排序图像...`);
 
-        // // 预加载所有图像并获取Z轴位置
-        // const imagesWithPosition = await Promise.all(
-        //   imageIds.map(async (imageId) => {
-        //     await imageLoader.loadAndCacheImage(imageId);
-        //     const imagePlaneModule = metaData.get('imagePlaneModule', imageId);
-        //     return {
-        //       imageId,
-        //       position: imagePlaneModule?.imagePositionPatient?.[2] || 0,
-        //     };
-        //   })
-        // );
+        // 预加载所有图像并获取Z轴位置
+        const imagesWithPosition = await Promise.all(
+          imageIds.map(async (imageId) => {
+            await imageLoader.loadAndCacheImage(imageId);
+            const imagePlaneModule = metaData.get('imagePlaneModule', imageId);
+            return {
+              imageId,
+              position: imagePlaneModule?.imagePositionPatient?.[2] || 0,
+            };
+          })
+        );
 
-        // // 按Z轴位置排序
-        // imagesWithPosition.sort((a, b) => a.position - b.position);
-        // const sortedImageIds = imagesWithPosition.map(item => item.imageId);
+        // 按Z轴位置排序
+        imagesWithPosition.sort((a, b) => a.position - b.position);
+        const sortedImageIds = imagesWithPosition.map(item => item.imageId);
 
-        // console.log('✅ 图像已按位置排序');
-        // console.log('Z轴位置范围:', {
-        //   min: imagesWithPosition[0].position,
-        //   max: imagesWithPosition[imagesWithPosition.length - 1].position,
-        // });
+        console.log('✅ 图像已按位置排序');
+        console.log('Z轴位置范围:', {
+          min: imagesWithPosition[0].position,
+          max: imagesWithPosition[imagesWithPosition.length - 1].position,
+        }); */
 
         const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
 
@@ -81,6 +107,8 @@ const VolumeDemo = () => {
         // 重置相机以适配整个 volume
         viewport.resetCamera();
         console.log('✅ 相机已重置');
+
+        setTools(renderingEngine.id);
 
         // Render the image
         viewport.render();
@@ -114,6 +142,9 @@ const VolumeDemo = () => {
       <div className="text-center">Volume Demo</div>
       <div className='flex gap-4'>
         <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
+      </div>
+      <div>
+
       </div>
     </DemoWrapper>
   );
