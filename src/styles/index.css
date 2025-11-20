@@ -14,5 +14,10 @@ body,
     background-color: rgb(254 243 199);
     border-width: 1px;
     cursor: pointer;
+    padding: 0 5px;
+  }
+
+  .baseBtn:hover {
+    background-color: rgb(244, 219, 27);
   }
 }

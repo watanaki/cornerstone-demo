@@ -1,6 +1,6 @@
 import { imageLoader, metaData } from "@cornerstonejs/core";
 import { useEffect, useState } from "react";
-import { initCornerstone, imageIds } from "../tools";
+import { initCornerstone, fetchImageIds } from "../tools";
 import DemoWrapper from "./DemoWrapper";
 
 interface ImageMetadata {
@@ -26,6 +26,8 @@ const DicomMetadataChecker = () => {
     await initCornerstone({ initVolumeLoader: true });
 
     const results: ImageMetadata[] = [];
+
+    const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
 
     for (let i = 0; i < imageIds.length; i++) {
       const imageId = imageIds[i];

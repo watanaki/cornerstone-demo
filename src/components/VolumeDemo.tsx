@@ -1,12 +1,12 @@
-import { getRenderEngine, initCornerstone, imageIds } from "@/tools";
-import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@cornerstonejs/core";
-import { ViewportType } from "@cornerstonejs/core/enums";
-import { useEffect, useRef } from "react";
+import { getRenderEngine, initCornerstone, fetchImageIds } from "@/tools";
+import { volumeLoader, type Types } from "@cornerstonejs/core";
+import { OrientationAxis, ViewportType } from "@cornerstonejs/core/enums";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DemoWrapper from "./DemoWrapper";
 import { addTool, StackScrollTool, ToolGroupManager } from "@cornerstonejs/tools";
 import { MouseBindings } from "@cornerstonejs/tools/enums";
+import type { IVolumeViewport } from "@cornerstonejs/core/types";
 
-// const { ViewportType } = Enums;
 const viewportId = 'myVolume';
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
 
@@ -36,6 +36,7 @@ const setTools = (renderingEngineId: string) => {
 
 const VolumeDemo = () => {
   const a = useRef<HTMLDivElement>(null);
+  const [axis, setAxis] = useState<OrientationAxis>(OrientationAxis.AXIAL);
 
   useEffect(() => {
     let mounted = true;
@@ -55,10 +56,13 @@ const VolumeDemo = () => {
         element: a.current,
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
-          orientation: Enums.OrientationAxis.AXIAL,
+          orientation: axis,
           background: [0.2, 0, 0.2] as Types.Point3,
         },
       };
+
+      const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
+
       renderingEngine.enableElement(viewportInput);
 
       const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
@@ -125,9 +129,6 @@ const VolumeDemo = () => {
         console.error("❌ Volume 创建/加载失败:");
         console.error(err);
       }
-
-      // Set the volume to load
-
     }
 
     init();
@@ -137,14 +138,25 @@ const VolumeDemo = () => {
     };
   }, []);
 
+  const toggleOrientation = useCallback((orientation: OrientationAxis) => {
+    if (axis === orientation) return;
+    const renderEngine = getRenderEngine();
+    const viewport = renderEngine.getViewport(viewportId) as IVolumeViewport;
+
+    setAxis(orientation);
+    viewport.setOrientation(orientation);
+  }, [axis]);
+
   return (
     <DemoWrapper>
       <div className="text-center">Volume Demo</div>
       <div className='flex gap-4'>
         <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
       </div>
-      <div>
-
+      <div className="flex gap-4 mt-4">
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.AXIAL)}>axial</button>
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.CORONAL)}>coronal</button>
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.SAGITTAL)}>sagittal</button>
       </div>
     </DemoWrapper>
   );

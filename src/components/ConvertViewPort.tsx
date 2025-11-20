@@ -7,7 +7,7 @@ import {
 } from '@cornerstonejs/core';
 import type { Types } from '@cornerstonejs/core'
 import { useCallback, useEffect, useRef } from 'react';
-import { getRenderEngine, initCornerstone, imageIds } from '../tools';
+import { getRenderEngine, initCornerstone, fetchImageIds } from '../tools';
 import DemoWrapper from './DemoWrapper';
 import type { IStackViewport, IVolumeViewport } from '@cornerstonejs/core/types';
 
@@ -67,6 +67,8 @@ const ConvertViewportDemo = () => {
       renderingEngine.current.enableElement(viewportInput);
 
       const viewport = renderingEngine.current.getViewport(viewportId) as Types.IStackViewport;
+
+      const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
 
       await viewport.setStack(imageIds, 13);
       viewport.resetCamera();

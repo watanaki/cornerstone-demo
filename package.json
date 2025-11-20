@@ -13,6 +13,7 @@
     "@cornerstonejs/core": "^2.19.16",
     "@cornerstonejs/dicom-image-loader": "^2.19.16",
     "@cornerstonejs/tools": "^2.19.16",
+    "axios": "^1.13.2",
     "dicom-parser": "1.8.21",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -3,7 +3,7 @@ import {
   type Types,
 } from '@cornerstonejs/core';
 import { useEffect, useRef } from 'react';
-import { getRenderEngine, initCornerstone, imageIds } from '../tools';
+import { getRenderEngine, initCornerstone, fetchImageIds } from '../tools';
 import DemoWrapper from './DemoWrapper';
 import { addTool, StackScrollTool, ToolGroupManager } from '@cornerstonejs/tools';
 import { MouseBindings } from '@cornerstonejs/tools/enums';
@@ -50,11 +50,13 @@ const StackDemo = () => {
         type: Enums.ViewportType.STACK,
       };
 
+      const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
+
       renderingEngine.enableElement(viewportInput);
 
       const viewport = renderingEngine.getViewport(viewportId) as Types.IStackViewport;
 
-      await viewport.setStack(imageIds);
+      await viewport.setStack(imageIds, 0);
       viewport.resetCamera();
       viewport.render();
 

@@ -1,2 +1,2 @@
 export * from "./cornerstone";
-export * from "./DicomData";
+export * from "./fetchImageIds";
