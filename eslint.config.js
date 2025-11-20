@@ -22,17 +22,16 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      // 强制使用分号
-      'semi': ['error', 'always'],
-      // TypeScript 分号规则
-      '@typescript-eslint/semi': ['error', 'always'],
       // React Hooks 规则
       ...reactHooks.configs.recommended.rules,
+      // 检查 Hook 依赖项
+      'react-hooks/exhaustive-deps': 'warn',
       // React Refresh 规则
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: "^_{1,2}.*$" }]
     },
   },
 ])

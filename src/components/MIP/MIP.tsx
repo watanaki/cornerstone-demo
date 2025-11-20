@@ -1,13 +1,13 @@
-import { getRenderEngine, initCornerstone, fetchImageIds } from "@/tools";
-import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@cornerstonejs/core";
-import { ViewportType } from "@cornerstonejs/core/enums";
-import { useCallback, useEffect, useRef, useState } from "react";
-import DemoWrapper from "./DemoWrapper";
-import { addTool, StackScrollTool, ToolGroupManager } from "@cornerstonejs/tools";
-import { MouseBindings } from "@cornerstonejs/tools/enums";
-import type { IVolumeViewport } from "@cornerstonejs/core/types";
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import DemoWrapper from '../DemoWrapper';
+import { addTool, StackScrollTool, ToolGroupManager } from '@cornerstonejs/tools';
+import { MouseBindings } from '@cornerstonejs/tools/enums';
+import { BlendModes, OrientationAxis, ViewportType } from '@cornerstonejs/core/enums';
+import { fetchImageIds, getRenderEngine, initCornerstone } from '@/tools';
+import { volumeLoader, type Types } from '@cornerstonejs/core';
+import type { IVolumeViewport } from '@cornerstonejs/core/types';
+import { twMerge } from 'tailwind-merge';
 
-// const { ViewportType } = Enums;
 const viewportId = 'myVolume';
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
 
@@ -35,9 +35,10 @@ const setTools = (renderingEngineId: string) => {
   });
 }
 
-const VolumeDemo = () => {
+const MIP = () => {
   const a = useRef<HTMLDivElement>(null);
-  const [orientationAxis, setOrientationAxis] = useState<Enums.OrientationAxis>(Enums.OrientationAxis.SAGITTAL);
+  const [axis, setAxis] = useState<OrientationAxis>(OrientationAxis.AXIAL);
+  const [isMIPOn, setIsMIPOn] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -57,7 +58,7 @@ const VolumeDemo = () => {
         element: a.current,
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
-          orientation: orientationAxis,
+          orientation: axis,
           background: [0.2, 0, 0.2] as Types.Point3,
         },
       };
@@ -69,41 +70,19 @@ const VolumeDemo = () => {
       const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
 
       try {
-        /** console.log(`🔄 预加载并排序图像...`);
-
-        // 预加载所有图像并获取Z轴位置
-        const imagesWithPosition = await Promise.all(
-          imageIds.map(async (imageId) => {
-            await imageLoader.loadAndCacheImage(imageId);
-            const imagePlaneModule = metaData.get('imagePlaneModule', imageId);
-            return {
-              imageId,
-              position: imagePlaneModule?.imagePositionPatient?.[2] || 0,
-            };
-          })
-        );
-
-        // 按Z轴位置排序
-        imagesWithPosition.sort((a, b) => a.position - b.position);
-        const sortedImageIds = imagesWithPosition.map(item => item.imageId);
-
-        console.log('✅ 图像已按位置排序');
-        console.log('Z轴位置范围:', {
-          min: imagesWithPosition[0].position,
-          max: imagesWithPosition[imagesWithPosition.length - 1].position,
-        }); */
 
         const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
 
         console.log('🔄 开始加载图像数据...');
         await volume.load();
         console.log('✅ Volume 加载完成!');
-        console.log('📊 Volume 信息:', {
-          dimensions: volume.dimensions,
-          spacing: volume.spacing,
-          direction: volume.direction,
-          numSlices: imageIds.length
-        });
+        // console.log('📊 Volume 信息:', {
+        //   dimensions: volume.dimensions,
+        //   spacing: volume.spacing,
+        //   direction: volume.direction,
+        //   numSlices: imageIds.length
+        // });
+        console.log(volume.dimensions);
 
         // Set the volume on the viewport
         await viewport.setVolumes([{ volumeId }]);
@@ -119,20 +98,10 @@ const VolumeDemo = () => {
         viewport.render();
         console.log('✅ 渲染完成!');
 
-        // 检查画布状态
-        const canvas = viewport.canvas;
-        console.log('🖼️ Canvas 状态:', {
-          width: canvas.width,
-          height: canvas.height,
-          style: canvas.style.cssText,
-        });
       } catch (err) {
         console.error("❌ Volume 创建/加载失败:");
         console.error(err);
       }
-
-      // Set the volume to load
-
     }
 
     init();
@@ -142,30 +111,54 @@ const VolumeDemo = () => {
     };
   }, []);
 
-  const toggleOrientation = useCallback((orientation: Enums.OrientationAxis) => {
+  const toggleOrientation = useCallback((orientation: OrientationAxis) => {
+    if (axis === orientation) return;
     const renderEngine = getRenderEngine();
     const viewport = renderEngine.getViewport(viewportId) as IVolumeViewport;
 
+    setAxis(orientation);
     viewport.setOrientation(orientation);
-  }, []);
+  }, [axis]);
+
+  const toggleMIP = useCallback(() => {
+    console.log("切换MIP");
+    const renderEngine = getRenderEngine();
+    const viewport = renderEngine.getViewport(viewportId) as IVolumeViewport;
+
+    if (isMIPOn) {
+      viewport.setBlendMode(BlendModes.AVERAGE_INTENSITY_BLEND);
+      viewport.setSlabThickness(1);
+    } else {
+      const imageData = viewport.getImageData();
+      if (!imageData) {
+        console.warn("No image data");
+        return;
+      }
+      // const { dimensions } = imageData;
+      // const slabThickness = Math.sqrt(
+      //   dimensions[0] ** 2 + dimensions[1] ** 2 + dimensions[2] ** 2
+      // );
+      viewport.setBlendMode(BlendModes.MAXIMUM_INTENSITY_BLEND);
+      viewport.setSlabThickness(10);
+    }
+    viewport.render();
+    setIsMIPOn(!isMIPOn);
+  }, [isMIPOn]);
 
   return (
     <DemoWrapper>
       <div className="text-center">Volume Demo</div>
-      <div className='flex gap-4'>
+      <div className='flex gap-4 items-center'>
+        <button className={twMerge("baseBtn h-24", isMIPOn ? "bg-amber-400" : "")} onClick={toggleMIP}>MIP</button>
         <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
       </div>
       <div className="flex gap-4 mt-4">
-        <button className="baseBtn" onClick={() => { }}>axial</button>
-        <button className="baseBtn" onClick={() => { }}>coronal</button>
-        <button className="baseBtn" onClick={() => { }}>sagittal</button>
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.AXIAL)}>axial</button>
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.CORONAL)}>coronal</button>
+        <button className="baseBtn" onClick={() => toggleOrientation(OrientationAxis.SAGITTAL)}>sagittal</button>
       </div>
     </DemoWrapper>
   );
 }
 
-// const VolumeDemo = () => {
-//   return <div>TEST</div>
-// }
-
-export default VolumeDemo;
+export default MIP;

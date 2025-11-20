@@ -18,6 +18,6 @@ body,
   }
 
   .baseBtn:hover {
-    background-color: rgb(244, 219, 27);
+    @apply bg-amber-200
   }
 }
