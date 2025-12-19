@@ -1,18 +1,32 @@
-import { getRenderEngine, initCornerstone, fetchImageIds } from "@/tools";
-import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@cornerstonejs/core";
-import { ViewportType } from "@cornerstonejs/core/enums";
-import { useCallback, useEffect, useRef, useState } from "react";
-import DemoWrapper from "./DemoWrapper";
-import { addTool, StackScrollTool, ToolGroupManager } from "@cornerstonejs/tools";
-import { MouseBindings } from "@cornerstonejs/tools/enums";
-import type { IVolumeViewport } from "@cornerstonejs/core/types";
+import {
+  Enums,
+  volumeLoader,
+  type Types,
+} from '@cornerstonejs/core';
+import {
+  addTool,
+  BrushTool,
+  StackScrollTool,
+  ToolGroupManager,
+  segmentation,
+  Enums as csToolEnums,
+} from '@cornerstonejs/tools';
+import {
+  getRenderEngine,
+  initCornerstone,
+  fetchImageIds,
+} from '@tools';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import DemoWrapper from '../DemoWrapper';
+import { MouseBindings } from '@cornerstonejs/tools/enums';
 
-// const { ViewportType } = Enums;
-const viewportId = 'myVolume';
+const viewportId = 'CT_AXIAL_STACK';
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
+
 
 const setTools = (renderingEngineId: string) => {
   addTool(StackScrollTool);
+  addTool(BrushTool);
 
   const toolGroupId = "myToolGroup";
 
@@ -23,19 +37,29 @@ const setTools = (renderingEngineId: string) => {
   }
 
   toolGroup?.addTool(StackScrollTool.toolName);
+  toolGroup?.addTool(BrushTool.name);
 
   toolGroup?.addViewport(viewportId, renderingEngineId);
 
   toolGroup?.setToolActive(StackScrollTool.toolName, {
     bindings: [
-      {
-        mouseButton: MouseBindings.Wheel,
-      },
+      { mouseButton: MouseBindings.Wheel, },
+      { mouseButton: MouseBindings.Primary, },
     ],
   });
+
+  const segmentationId = "test";
+
+  segmentation.addSegmentations([{
+    segmentationId,
+    representation: {
+      type: csToolEnums.SegmentationRepresentations.Labelmap,
+      data: { volumeId: segmentationId }
+    }
+  }]);
 }
 
-const VolumeDemo = () => {
+const SegmentationDemo = () => {
   const a = useRef<HTMLDivElement>(null);
   const [orientationAxis, setOrientationAxis] = useState<Enums.OrientationAxis>(Enums.OrientationAxis.SAGITTAL);
 
@@ -53,7 +77,7 @@ const VolumeDemo = () => {
 
       const viewportInput = {
         viewportId,
-        type: ViewportType.ORTHOGRAPHIC,
+        type: Enums.ViewportType.ORTHOGRAPHIC,
         element: a.current,
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
@@ -120,7 +144,7 @@ const VolumeDemo = () => {
 
   const toggleOrientation = useCallback((orientation: Enums.OrientationAxis) => {
     const renderEngine = getRenderEngine();
-    const viewport = renderEngine.getViewport(viewportId) as IVolumeViewport;
+    const viewport = renderEngine.getViewport(viewportId) as Types.IVolumeViewport;
 
     viewport.setOrientation(orientation);
   }, []);
@@ -132,16 +156,12 @@ const VolumeDemo = () => {
         <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
       </div>
       <div className="flex gap-4 mt-4">
-        <button className="baseBtn" onClick={() => { }}>axial</button>
-        <button className="baseBtn" onClick={() => { }}>coronal</button>
-        <button className="baseBtn" onClick={() => { }}>sagittal</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.AXIAL) }}>axial</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.CORONAL) }}>coronal</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.SAGITTAL) }}>sagittal</button>
       </div>
     </DemoWrapper>
   );
 }
 
-// const VolumeDemo = () => {
-//   return <div>TEST</div>
-// }
-
-export default VolumeDemo;
+export default SegmentationDemo;

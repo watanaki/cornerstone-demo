@@ -76,12 +76,6 @@ const MIP = () => {
         console.log('🔄 开始加载图像数据...');
         await volume.load();
         console.log('✅ Volume 加载完成!');
-        // console.log('📊 Volume 信息:', {
-        //   dimensions: volume.dimensions,
-        //   spacing: volume.spacing,
-        //   direction: volume.direction,
-        //   numSlices: imageIds.length
-        // });
         console.log(volume.dimensions);
 
         // Set the volume on the viewport

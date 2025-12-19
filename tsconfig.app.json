@@ -34,6 +34,9 @@
       ],
       "@axios": [
         "./src/axios"
+      ],
+      "@tools": [
+        "./src/tools"
       ]
     },
     /* Linting */

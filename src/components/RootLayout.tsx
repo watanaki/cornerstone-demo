@@ -8,6 +8,7 @@ const RootLayout = () => {
       <NaviButton route='convertViewport' text='Convert Viewport Demo' />
       <NaviButton route='metadataChecker' text='🔍 DICOM Metadata Checker' />
       <NaviButton route='mip' text='MIP' />
+      <NaviButton route='segmentation' text='Segmentation' />
     </div>
   )
 }

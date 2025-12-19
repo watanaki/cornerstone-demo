@@ -16,6 +16,7 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
       "@components": resolve(__dirname, "./src/components"),
       "@axios": resolve(__dirname, "./src/axios"),
+      "@tools": resolve(__dirname, "./src/tools"),
     }
   },
   optimizeDeps: {

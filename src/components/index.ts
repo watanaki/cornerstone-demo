@@ -3,6 +3,7 @@ import StackDemo from './StackDemo';
 import RootLayout from './RootLayout';
 import ConvertViewPortDemo from './ConvertViewPort';
 import DicomMetadataChecker from './DicomMetadataChecker';
+import { SegmentationDemo } from "./Segmentation";
 
 export {
   VolumeDemo,
@@ -10,4 +11,5 @@ export {
   RootLayout,
   ConvertViewPortDemo,
   DicomMetadataChecker,
+  SegmentationDemo,
 }
