@@ -22,7 +22,7 @@ const stack2Volume = async (
   // 直接使用原始的 imageIds，不需要修改 scheme
   const imageIds = viewport.getImageIds();
 
-  let viewportInput = [{
+  const viewportInput = [{
     viewportId: id,
     type: Enums.ViewportType.ORTHOGRAPHIC,
     element,

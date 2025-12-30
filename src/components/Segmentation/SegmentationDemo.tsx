@@ -2,6 +2,10 @@ import {
   Enums,
   volumeLoader,
   type Types,
+  metaData,
+  RenderingEngine,
+  getRenderingEngine,
+  setVolumesForViewports
 } from '@cornerstonejs/core';
 import {
   addTool,
@@ -12,7 +16,6 @@ import {
   Enums as csToolEnums,
 } from '@cornerstonejs/tools';
 import {
-  getRenderEngine,
   initCornerstone,
   fetchImageIds,
 } from '@tools';
@@ -20,15 +23,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import DemoWrapper from '../DemoWrapper';
 import { MouseBindings } from '@cornerstonejs/tools/enums';
 
-const viewportId = 'CT_AXIAL_STACK';
-const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
+const renderingEngineId = "segmentation";
+const toolGroupId = "segGroup";
 
+const viewportId1 = 'CT_AXIAL_STACK';
+const viewportId2 = 'CT_SAGITTAL_STACK';
+const viewportId3 = 'CT_CORONAL_STACK';
+const segmentationId = "segmentationTest";
+
+const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
+const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
 
 const setTools = (renderingEngineId: string) => {
   addTool(StackScrollTool);
   addTool(BrushTool);
-
-  const toolGroupId = "myToolGroup";
 
   // 检查工具组是否已存在，避免重复创建
   let toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
@@ -37,18 +45,28 @@ const setTools = (renderingEngineId: string) => {
   }
 
   toolGroup?.addTool(StackScrollTool.toolName);
-  toolGroup?.addTool(BrushTool.name);
-
-  toolGroup?.addViewport(viewportId, renderingEngineId);
+  toolGroup?.addTool(BrushTool.toolName);
 
   toolGroup?.setToolActive(StackScrollTool.toolName, {
     bindings: [
       { mouseButton: MouseBindings.Wheel, },
-      { mouseButton: MouseBindings.Primary, },
+      { mouseButton: MouseBindings.Secondary, },
     ],
   });
 
-  const segmentationId = "test";
+  toolGroup?.addViewport(viewportId1, renderingEngineId);
+  toolGroup?.addViewport(viewportId2, renderingEngineId);
+  toolGroup?.addViewport(viewportId3, renderingEngineId);
+}
+
+const addSegmentation = async () => {
+  const toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
+
+  toolGroup?.setToolActive(BrushTool.toolName, {
+    bindings: [{ mouseButton: MouseBindings.Primary, },],
+  });
+
+  volumeLoader.createAndCacheDerivedLabelmapVolume(volumeId, { volumeId: segmentationId });
 
   segmentation.addSegmentations([{
     segmentationId,
@@ -57,108 +75,117 @@ const setTools = (renderingEngineId: string) => {
       data: { volumeId: segmentationId }
     }
   }]);
+
+  await segmentation.addLabelmapRepresentationToViewportMap({
+    [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },],
+    [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },],
+    [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },]
+  });
 }
 
 const SegmentationDemo = () => {
   const a = useRef<HTMLDivElement>(null);
-  const [orientationAxis, setOrientationAxis] = useState<Enums.OrientationAxis>(Enums.OrientationAxis.SAGITTAL);
+  const b = useRef<HTMLDivElement>(null);
+  const c = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let mounted = true;
-
     const init = async () => {
       await initCornerstone({ initVolumeLoader: true, initTools: true });
-      const renderingEngine = getRenderEngine();
+      const renderingEngine = new RenderingEngine(renderingEngineId);
 
-      if (!a.current || !mounted) {
-        console.error('容器元素未找到或组件已卸载');
+      let volume;
+      try {
+        console.log('🔄 创建 Volume...');
+        volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
+      } catch (err) {
+        console.error("❌ Volume 创建失败:");
+        console.error(err);
         return;
       }
 
-      const viewportInput = {
-        viewportId,
-        type: Enums.ViewportType.ORTHOGRAPHIC,
-        element: a.current,
-        defaultOptions: {
-          // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
-          orientation: orientationAxis,
-          background: [0.2, 0, 0.2] as Types.Point3,
+      console.log('🔄 开始加载图像数据...');
+      await volume.load();
+
+      const viewportInput = [
+        {
+          viewportId: viewportId1,
+          type: Enums.ViewportType.ORTHOGRAPHIC,
+          element: a.current!,
+          defaultOptions: { orientation: Enums.OrientationAxis.AXIAL, background: [0.2, 0, 0.2] as Types.Point3, },
         },
-      };
+        {
+          viewportId: viewportId2,
+          type: Enums.ViewportType.ORTHOGRAPHIC,
+          element: b.current!,
+          defaultOptions: { orientation: Enums.OrientationAxis.SAGITTAL, background: [0.2, 0, 0.2] as Types.Point3, },
+        },
+        {
+          viewportId: viewportId3,
+          type: Enums.ViewportType.ORTHOGRAPHIC,
+          element: c.current!,
+          defaultOptions: { orientation: Enums.OrientationAxis.CORONAL, background: [0.2, 0, 0.2] as Types.Point3, },
+        }
+      ];
 
-      const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
+      renderingEngine.setViewports(viewportInput);
 
-      renderingEngine.enableElement(viewportInput);
+      setTools(renderingEngine.id);
+      console.log('✅ 工具已设置');
 
-      const viewport = renderingEngine.getViewport(viewportId) as Types.IVolumeViewport;
+      await setVolumesForViewports(
+        renderingEngine,
+        [{
+          volumeId,
+          callback: ({ volumeActor }) => {
+            // set the windowLevel after the volumeActor is created
+            volumeActor.getProperty().getRGBTransferFunction(0).setMappingRange(-180, 220);
+          }
+        }],
+        [viewportId1, viewportId2, viewportId3]
+      );
+      console.log('✅ Volume 已设置到 viewport');
 
-      try {
-        const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
+      renderingEngine.render();
 
-        console.log('🔄 开始加载图像数据...');
-        await volume.load();
-        console.log('✅ Volume 加载完成!');
-        console.log('📊 Volume 信息:', {
-          dimensions: volume.dimensions,
-          spacing: volume.spacing,
-          direction: volume.direction,
-          numSlices: imageIds.length
-        });
+      // ============================Segmentation========================================
+      // try {
+      //   console.log('🔄 创建 Segmentation Volume...');
+      //   volumeLoader.createAndCacheDerivedLabelmapVolume(volumeId, { volumeId: segmentationId });
+      //   console.log('✅ Segmentation Volume 创建完成');
 
-        // Set the volume on the viewport
-        await viewport.setVolumes([{ volumeId }]);
-        console.log('✅ Volume 已设置到 viewport');
+      //   segmentation.addSegmentations([{
+      //     segmentationId,
+      //     representation: {
+      //       type: csToolEnums.SegmentationRepresentations.Labelmap,
+      //       data: { volumeId: segmentationId }
+      //     }
+      //   }]);
+      //   console.log('✅ Segmentation 已添加');
+      // } catch (error) {
+      //   console.error(error);
+      // }
+      // ============================Segmentation========================================
 
-        // 重置相机以适配整个 volume
-        viewport.resetCamera();
-        console.log('✅ 相机已重置');
 
-        setTools(renderingEngine.id);
 
-        // Render the image
-        viewport.render();
-        console.log('✅ 渲染完成!');
-
-        // 检查画布状态
-        const canvas = viewport.canvas;
-        console.log('🖼️ Canvas 状态:', {
-          width: canvas.width,
-          height: canvas.height,
-          style: canvas.style.cssText,
-        });
-      } catch (err) {
-        console.error("❌ Volume 创建/加载失败:");
-        console.error(err);
-      }
-
-      // Set the volume to load
-
+      // ============================Segmentation========================================
+      // segmentation.addLabelmapRepresentationToViewport(viewportId, [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap }]);
+      // console.log('✅ Segmentation 表示已添加到 Viewport');
+      // ============================Segmentation========================================
     }
-
     init();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const toggleOrientation = useCallback((orientation: Enums.OrientationAxis) => {
-    const renderEngine = getRenderEngine();
-    const viewport = renderEngine.getViewport(viewportId) as Types.IVolumeViewport;
-
-    viewport.setOrientation(orientation);
   }, []);
 
   return (
     <DemoWrapper>
-      <div className="text-center">Volume Demo</div>
+      <div className="text-center">Segmentation Demo</div>
       <div className='flex gap-4'>
-        <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
+        <div ref={a} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+        <div ref={b} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+        <div ref={c} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
       </div>
       <div className="flex gap-4 mt-4">
-        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.AXIAL) }}>axial</button>
-        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.CORONAL) }}>coronal</button>
-        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.SAGITTAL) }}>sagittal</button>
+        <button className="baseBtn" onClick={() => { addSegmentation() }}>Segmentation</button>
       </div>
     </DemoWrapper>
   );

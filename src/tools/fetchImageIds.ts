@@ -6,7 +6,7 @@ const path = "http://192.168.1.47:3011/receive";
 
 export const fetchImageIds = async (seriesId: string) => {
   // const res = await axiosInstance.post<{ imageIds: string[] }>("/test_get_dicom_path", { seriesId });
-  const res = await axiosInstance.post<{ imageIds: string[] }>("/test", { a: "output" });
+  const res = await axiosInstance.post<{ imageIds: string[] }>("/test", { a: "input" });
   const { imageIds } = res.data;
 
   return imageIds;

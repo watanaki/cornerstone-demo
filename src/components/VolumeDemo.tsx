@@ -1,5 +1,5 @@
 import { getRenderEngine, initCornerstone, fetchImageIds } from "@/tools";
-import { Enums, volumeLoader, type Types, imageLoader, metaData } from "@cornerstonejs/core";
+import { Enums, volumeLoader, type Types } from "@cornerstonejs/core";
 import { ViewportType } from "@cornerstonejs/core/enums";
 import { useCallback, useEffect, useRef, useState } from "react";
 import DemoWrapper from "./DemoWrapper";
@@ -29,7 +29,7 @@ const setTools = (renderingEngineId: string) => {
   toolGroup?.setToolActive(StackScrollTool.toolName, {
     bindings: [
       {
-        mouseButton: MouseBindings.Wheel,
+        mouseButton: MouseBindings.Primary,
       },
     ],
   });
@@ -37,24 +37,18 @@ const setTools = (renderingEngineId: string) => {
 
 const VolumeDemo = () => {
   const a = useRef<HTMLDivElement>(null);
-  const [orientationAxis, setOrientationAxis] = useState<Enums.OrientationAxis>(Enums.OrientationAxis.SAGITTAL);
+  const [orientationAxis, setOrientationAxis] = useState<Enums.OrientationAxis>(Enums.OrientationAxis.AXIAL);
+  const mounted = !!a.current;
 
   useEffect(() => {
-    let mounted = true;
-
     const init = async () => {
       await initCornerstone({ initVolumeLoader: true, initTools: true });
       const renderingEngine = getRenderEngine();
 
-      if (!a.current || !mounted) {
-        console.error('容器元素未找到或组件已卸载');
-        return;
-      }
-
       const viewportInput = {
         viewportId,
         type: ViewportType.ORTHOGRAPHIC,
-        element: a.current,
+        element: a.current!,
         defaultOptions: {
           // 可选值: AXIAL (轴位), SAGITTAL (矢状面), CORONAL (冠状面)
           orientation: orientationAxis,
@@ -72,7 +66,7 @@ const VolumeDemo = () => {
         const volume = await volumeLoader.createAndCacheVolume(volumeId, { imageIds });
 
         console.log('🔄 开始加载图像数据...');
-        await volume.load();
+        volume.load();
         console.log('✅ Volume 加载完成!');
         console.log('📊 Volume 信息:', {
           dimensions: volume.dimensions,
@@ -106,24 +100,22 @@ const VolumeDemo = () => {
         console.error("❌ Volume 创建/加载失败:");
         console.error(err);
       }
-
-      // Set the volume to load
-
     }
 
     init();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  }, [mounted]);
 
   const toggleOrientation = useCallback((orientation: Enums.OrientationAxis) => {
+    if (orientationAxis === orientation) {
+      console.warn(`Already in ${orientation}`);
+      return;
+    }
     const renderEngine = getRenderEngine();
     const viewport = renderEngine.getViewport(viewportId) as IVolumeViewport;
 
     viewport.setOrientation(orientation);
-  }, []);
+    setOrientationAxis(orientation);
+  }, [orientationAxis]);
 
   return (
     <DemoWrapper>
@@ -132,9 +124,9 @@ const VolumeDemo = () => {
         <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
       </div>
       <div className="flex gap-4 mt-4">
-        <button className="baseBtn" onClick={() => { }}>axial</button>
-        <button className="baseBtn" onClick={() => { }}>coronal</button>
-        <button className="baseBtn" onClick={() => { }}>sagittal</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.AXIAL) }}>axial</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.CORONAL) }}>coronal</button>
+        <button className="baseBtn" onClick={() => { toggleOrientation(Enums.OrientationAxis.SAGITTAL) }}>sagittal</button>
       </div>
     </DemoWrapper>
   );
