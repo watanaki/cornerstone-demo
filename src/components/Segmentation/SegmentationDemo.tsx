@@ -15,11 +15,9 @@ import {
   segmentation,
   Enums as csToolEnums,
 } from '@cornerstonejs/tools';
-import {
-  initCornerstone,
-  fetchImageIds,
-} from '@tools';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { initCornerstone } from '@tools';
+import { useEffect, useRef } from 'react';
+import { fetchImageIds, type BodyPart } from "./fetchImageIds";
 import DemoWrapper from '../DemoWrapper';
 import { MouseBindings } from '@cornerstonejs/tools/enums';
 
@@ -32,7 +30,25 @@ const viewportId3 = 'CT_CORONAL_STACK';
 const segmentationId = "segmentationTest";
 
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
-const imageIds = await fetchImageIds("1.3.6.1.4.1.14519.5.2.1.7009.2403.226151125820845824875394858561");
+
+const getImageIds = async () => {
+  const fn = "1765864199882";
+  const imageIds = await fetchImageIds(fn, null, true);
+  const abdomenIds = await fetchImageIds(fn, "abdomen");
+  const backIds = await fetchImageIds(fn, "back");
+  const boneIds = await fetchImageIds(fn, "bone");
+  const gluteusIds = await fetchImageIds(fn, "gluteus");
+  const liverIds = await fetchImageIds(fn, "liver");
+
+  return {
+    imageIds,
+    abdomenIds,
+    backIds,
+    boneIds,
+    gluteusIds,
+    liverIds,
+  }
+}
 
 const setTools = (renderingEngineId: string) => {
   addTool(StackScrollTool);
@@ -59,7 +75,7 @@ const setTools = (renderingEngineId: string) => {
   toolGroup?.addViewport(viewportId3, renderingEngineId);
 }
 
-const addSegmentation = async () => {
+const addSegmentationTool = async () => {
   const toolGroup = ToolGroupManager.getToolGroup(toolGroupId);
 
   toolGroup?.setToolActive(BrushTool.toolName, {
@@ -77,20 +93,76 @@ const addSegmentation = async () => {
   }]);
 
   await segmentation.addLabelmapRepresentationToViewportMap({
-    [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },],
-    [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },],
-    [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap, },]
+    [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
+    [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
+    [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },]
   });
+}
+
+const addSegmentation = async (bodyPart: BodyPart) => {
+  if (!bodyPart) return;
+  const { abdomenIds, backIds, boneIds, gluteusIds, liverIds } = await getImageIds();
+  const segs: Record<Exclude<BodyPart, null>, { imageIds: string[], segVolumeId: string, segmentationId: string }> = {
+    abdomen: { imageIds: abdomenIds, segVolumeId: 'abdomen_volume', segmentationId: "abdomen_volume" },
+    back: { imageIds: backIds, segVolumeId: 'back_volume', segmentationId: "back_volume" },
+    bone: { imageIds: boneIds, segVolumeId: 'bone_volume', segmentationId: "bone_volume" },
+    gluteus: { imageIds: gluteusIds, segVolumeId: 'gluteus_volume', segmentationId: "gluteus_volume" },
+    liver: { imageIds: liverIds, segVolumeId: 'liver_volume', segmentationId: "liver_volume" },
+  };
+
+  const { segVolumeId, imageIds, segmentationId } = segs[bodyPart];
+
+  const abdomenVolume = await volumeLoader.createAndCacheVolume(segVolumeId, { imageIds });
+
+  await Promise.all([
+    abdomenVolume.load(),
+  ]);
+
+  await segmentation.addSegmentations([{
+    segmentationId,
+    representation: {
+      type: csToolEnums.SegmentationRepresentations.Labelmap,
+      data: { volumeId: segVolumeId }
+    }
+  }]);
+
+  // await segmentation.addSegmentationRepresentations(viewportId1, [{
+  //   segmentationId,
+  //   type: csToolEnums.SegmentationRepresentations.Labelmap,
+  // }]);
+
+  await segmentation.addLabelmapRepresentationToViewportMap({
+    [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
+    [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
+    [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },]
+  });
+
+  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 118, [255, 0, 0, 255]);
+  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 121, [0, 255, 0, 255]);
+  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 120, [0, 0, 255, 255]);
+
+  segmentation.config.style.setStyle({ type: csToolEnums.SegmentationRepresentations.Labelmap }, {
+    fillAlpha: 0.5,
+    renderOutline: false
+  })
+
+  // console.log('✅ Segmentation 已添加并设置颜色');
 }
 
 const SegmentationDemo = () => {
   const a = useRef<HTMLDivElement>(null);
   const b = useRef<HTMLDivElement>(null);
   const c = useRef<HTMLDivElement>(null);
+  const d = useRef<HTMLDivElement>(null);
+  const e = useRef<HTMLDivElement>(null);
+  const f = useRef<HTMLDivElement>(null);
+
+  document.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
   useEffect(() => {
     const init = async () => {
       await initCornerstone({ initVolumeLoader: true, initTools: true });
+      const { imageIds } = await getImageIds();
       const renderingEngine = new RenderingEngine(renderingEngineId);
 
       let volume;
@@ -146,32 +218,6 @@ const SegmentationDemo = () => {
       console.log('✅ Volume 已设置到 viewport');
 
       renderingEngine.render();
-
-      // ============================Segmentation========================================
-      // try {
-      //   console.log('🔄 创建 Segmentation Volume...');
-      //   volumeLoader.createAndCacheDerivedLabelmapVolume(volumeId, { volumeId: segmentationId });
-      //   console.log('✅ Segmentation Volume 创建完成');
-
-      //   segmentation.addSegmentations([{
-      //     segmentationId,
-      //     representation: {
-      //       type: csToolEnums.SegmentationRepresentations.Labelmap,
-      //       data: { volumeId: segmentationId }
-      //     }
-      //   }]);
-      //   console.log('✅ Segmentation 已添加');
-      // } catch (error) {
-      //   console.error(error);
-      // }
-      // ============================Segmentation========================================
-
-
-
-      // ============================Segmentation========================================
-      // segmentation.addLabelmapRepresentationToViewport(viewportId, [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap }]);
-      // console.log('✅ Segmentation 表示已添加到 Viewport');
-      // ============================Segmentation========================================
     }
     init();
   }, []);
@@ -180,12 +226,22 @@ const SegmentationDemo = () => {
     <DemoWrapper>
       <div className="text-center">Segmentation Demo</div>
       <div className='flex gap-4'>
-        <div ref={a} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+        <div ref={a} className='h-96 w-96 border-2 border-gray-400 bg-black'></div>
         <div ref={b} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
         <div ref={c} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
       </div>
+      {/* <div className='flex gap-4'>
+        <div ref={d} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+        <div ref={e} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+        <div ref={f} className='h-80 w-80 border-2 border-gray-400 bg-black'></div>
+      </div> */}
       <div className="flex gap-4 mt-4">
-        <button className="baseBtn" onClick={() => { addSegmentation() }}>Segmentation</button>
+        <button className="baseBtn" onClick={() => addSegmentationTool()}>Segmentation工具</button>
+        <button className="baseBtn" onClick={() => addSegmentation("abdomen")}>abdomen染色</button>
+        <button className="baseBtn" onClick={() => addSegmentation("back")}>back染色</button>
+        <button className="baseBtn" onClick={() => addSegmentation("bone")}>bone染色</button>
+        <button className="baseBtn" onClick={() => addSegmentation("gluteus")}>gluteus染色</button>
+        <button className="baseBtn" onClick={() => addSegmentation("liver")}>liver染色</button>
       </div>
     </DemoWrapper>
   );
