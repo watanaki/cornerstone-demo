@@ -16,10 +16,11 @@ import {
   Enums as csToolEnums,
 } from '@cornerstonejs/tools';
 import { initCornerstone } from '@tools';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchImageIds, type BodyPart } from "./fetchImageIds";
 import DemoWrapper from '../DemoWrapper';
 import { MouseBindings } from '@cornerstonejs/tools/enums';
+import { twMerge } from 'tailwind-merge';
 
 const renderingEngineId = "segmentation";
 const toolGroupId = "segGroup";
@@ -27,12 +28,12 @@ const toolGroupId = "segGroup";
 const viewportId1 = 'CT_AXIAL_STACK';
 const viewportId2 = 'CT_SAGITTAL_STACK';
 const viewportId3 = 'CT_CORONAL_STACK';
-const segmentationId = "segmentationTest";
 
 const volumeId = 'cornerstoneStreamingImageVolume:CT_VOLUME_001';
+const segmentationId = "segmentationToolTest";
 
 const getImageIds = async () => {
-  const fn = "1765864199882";
+  const fn = "1767508064559";
   const imageIds = await fetchImageIds(fn, null, true);
   const abdomenIds = await fetchImageIds(fn, "abdomen");
   const backIds = await fetchImageIds(fn, "back");
@@ -99,65 +100,70 @@ const addSegmentationTool = async () => {
   });
 }
 
-const addSegmentation = async (bodyPart: BodyPart) => {
-  if (!bodyPart) return;
-  const { abdomenIds, backIds, boneIds, gluteusIds, liverIds } = await getImageIds();
-  const segs: Record<Exclude<BodyPart, null>, { imageIds: string[], segVolumeId: string, segmentationId: string }> = {
-    abdomen: { imageIds: abdomenIds, segVolumeId: 'abdomen_volume', segmentationId: "abdomen_volume" },
-    back: { imageIds: backIds, segVolumeId: 'back_volume', segmentationId: "back_volume" },
-    bone: { imageIds: boneIds, segVolumeId: 'bone_volume', segmentationId: "bone_volume" },
-    gluteus: { imageIds: gluteusIds, segVolumeId: 'gluteus_volume', segmentationId: "gluteus_volume" },
-    liver: { imageIds: liverIds, segVolumeId: 'liver_volume', segmentationId: "liver_volume" },
-  };
+// @ts-expect-error for test
+window.seg = segmentation;
 
-  const { segVolumeId, imageIds, segmentationId } = segs[bodyPart];
+type SegInput = { imageIds: string[], segVolumeId: string, segmentationId: string }
 
-  const abdomenVolume = await volumeLoader.createAndCacheVolume(segVolumeId, { imageIds });
+const enableSegmentation = async ({ segVolumeId, imageIds, segmentationId }: SegInput) => {
+  console.log("染色");
 
-  await Promise.all([
-    abdomenVolume.load(),
-  ]);
+  if (!segmentation.state.getSegmentation(segmentationId)) {
+    console.log(`首次染色`);
+    const segmentationVolume = await volumeLoader.createAndCacheVolume(segVolumeId, { imageIds });
 
-  await segmentation.addSegmentations([{
-    segmentationId,
-    representation: {
-      type: csToolEnums.SegmentationRepresentations.Labelmap,
-      data: { volumeId: segVolumeId }
-    }
-  }]);
+    await segmentationVolume.load();
 
-  // await segmentation.addSegmentationRepresentations(viewportId1, [{
-  //   segmentationId,
-  //   type: csToolEnums.SegmentationRepresentations.Labelmap,
-  // }]);
+    await segmentation.addSegmentations([{
+      segmentationId,
+      representation: {
+        type: csToolEnums.SegmentationRepresentations.Labelmap,
+        data: { volumeId: segVolumeId }
+      }
+    }]);
+  }
 
-  await segmentation.addLabelmapRepresentationToViewportMap({
-    [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
-    [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },],
-    [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap },]
+  // await segmentation.addLabelmapRepresentationToViewport({
+  //   [viewportId1]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap }],
+  //   [viewportId2]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap }],
+  //   [viewportId3]: [{ segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap }]
+  // });
+
+  [viewportId1, viewportId2, viewportId3].forEach(viewportId => {
+    segmentation.addLabelmapRepresentationToViewport(viewportId, [{ segmentationId }]);
+
+    segmentation.config.color.setSegmentIndexColor(viewportId, segmentationId, 118, [255, 0, 0, 255]);
+    segmentation.config.color.setSegmentIndexColor(viewportId, segmentationId, 121, [0, 255, 0, 255]);
+    segmentation.config.color.setSegmentIndexColor(viewportId, segmentationId, 120, [0, 0, 255, 255]);
   });
-
-  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 118, [255, 0, 0, 255]);
-  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 121, [0, 255, 0, 255]);
-  segmentation.config.color.setSegmentIndexColor(viewportId1, segmentationId, 120, [0, 0, 255, 255]);
-
-  segmentation.config.style.setStyle({ type: csToolEnums.SegmentationRepresentations.Labelmap }, {
-    fillAlpha: 0.5,
-    renderOutline: false
-  })
-
-  // console.log('✅ Segmentation 已添加并设置颜色');
 }
+
+const disableSegmentation = async (segmentationId: string) => {
+  console.log("取消染色");
+  console.log(segmentationId);
+
+  segmentation.removeSegmentationRepresentation(viewportId1, { segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap });
+  segmentation.removeSegmentationRepresentation(viewportId2, { segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap });
+  segmentation.removeSegmentationRepresentation(viewportId3, { segmentationId, type: csToolEnums.SegmentationRepresentations.Labelmap });
+}
+
+const segs: BodyPart[] = ["abdomen", "back", "bone", "gluteus", "liver"];
 
 const SegmentationDemo = () => {
   const a = useRef<HTMLDivElement>(null);
   const b = useRef<HTMLDivElement>(null);
   const c = useRef<HTMLDivElement>(null);
-  const d = useRef<HTMLDivElement>(null);
-  const e = useRef<HTMLDivElement>(null);
-  const f = useRef<HTMLDivElement>(null);
-
   document.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+  // const d = useRef<HTMLDivElement>(null);
+  // const e = useRef<HTMLDivElement>(null);
+  // const f = useRef<HTMLDivElement>(null);
+  const [segStates, setSegStates] = useState<Record<BodyPart, boolean>>({
+    abdomen: false,
+    back: false,
+    bone: false,
+    gluteus: false,
+    liver: false,
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -210,6 +216,7 @@ const SegmentationDemo = () => {
           volumeId,
           callback: ({ volumeActor }) => {
             // set the windowLevel after the volumeActor is created
+            // images will be pale without this
             volumeActor.getProperty().getRGBTransferFunction(0).setMappingRange(-180, 220);
           }
         }],
@@ -221,6 +228,29 @@ const SegmentationDemo = () => {
     }
     init();
   }, []);
+
+  const toggleSegmentation = useCallback(async (bodyPart: BodyPart) => {
+    if (!bodyPart) return;
+    const { abdomenIds, backIds, boneIds, gluteusIds, liverIds } = await getImageIds();
+
+    const segs: Record<BodyPart, { imageIds: string[], segVolumeId: string, segmentationId: string }> = {
+      abdomen: { imageIds: abdomenIds, segVolumeId: 'abdomen_volume', segmentationId: "abdomen_volume" },
+      back: { imageIds: backIds, segVolumeId: 'back_volume', segmentationId: "back_volume" },
+      bone: { imageIds: boneIds, segVolumeId: 'bone_volume', segmentationId: "bone_volume" },
+      gluteus: { imageIds: gluteusIds, segVolumeId: 'gluteus_volume', segmentationId: "gluteus_volume" },
+      liver: { imageIds: liverIds, segVolumeId: 'liver_volume', segmentationId: "liver_volume" },
+    };
+
+    if (!segStates[bodyPart])
+      enableSegmentation(segs[bodyPart]);
+    else
+      disableSegmentation(segs[bodyPart].segmentationId);
+
+    setSegStates(prev => ({
+      ...prev,
+      [bodyPart]: !prev[bodyPart]
+    }));
+  }, [segStates]);
 
   return (
     <DemoWrapper>
@@ -237,11 +267,16 @@ const SegmentationDemo = () => {
       </div> */}
       <div className="flex gap-4 mt-4">
         <button className="baseBtn" onClick={() => addSegmentationTool()}>Segmentation工具</button>
-        <button className="baseBtn" onClick={() => addSegmentation("abdomen")}>abdomen染色</button>
-        <button className="baseBtn" onClick={() => addSegmentation("back")}>back染色</button>
-        <button className="baseBtn" onClick={() => addSegmentation("bone")}>bone染色</button>
-        <button className="baseBtn" onClick={() => addSegmentation("gluteus")}>gluteus染色</button>
-        <button className="baseBtn" onClick={() => addSegmentation("liver")}>liver染色</button>
+
+        {
+          segs.map(bodyPart => (<button
+            key={bodyPart}
+            className={twMerge("baseBtn", segStates[bodyPart] ? "bg-amber-400" : "")}
+            onClick={() => toggleSegmentation(bodyPart)}
+          >
+            {bodyPart}染色
+          </button>))
+        }
       </div>
     </DemoWrapper>
   );

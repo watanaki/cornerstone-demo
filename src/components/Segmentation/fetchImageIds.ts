@@ -5,9 +5,9 @@ const axiosInstance = axios.create({
   timeout: 10000,
 });
 
-export type BodyPart = "abdomen" | "back" | "bone" | "gluteus" | "liver" | null;
+export type BodyPart = "abdomen" | "back" | "bone" | "gluteus" | "liver";
 
-export const fetchImageIds = async (folderName: string, part: BodyPart, isInput = false) => {
+export const fetchImageIds = async (folderName: string, part: BodyPart | null, isInput = false) => {
   const res = await axiosInstance.post<{ imageIds: string[] }>("/test", { folderName, part, isInput });
   const { imageIds } = res.data;
   return imageIds;

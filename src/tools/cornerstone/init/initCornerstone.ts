@@ -1,6 +1,6 @@
 import { init as initCore } from '@cornerstonejs/core';
 import { init as initDicomImageLoader } from '@cornerstonejs/dicom-image-loader';
-import { init as initTools } from '@cornerstonejs/tools'
+import { init as initTools, segmentation, Enums as csToolEnums } from '@cornerstonejs/tools'
 import { initVolumeLoader } from './initVolumeLoader';
 
 interface InitOptions {
@@ -29,6 +29,12 @@ export const initCornerstone = async (options?: InitOptions) => {
     console.log('> Init Tools......');
     await initTools();
   }
+
+  segmentation.config.style.setStyle({ type: csToolEnums.SegmentationRepresentations.Labelmap }, {
+    fillAlpha: 0.5,
+    renderOutline: false,
+    fillAlphaInactive: 1,
+  });
 
   console.log('Cornerstone 初始化完成');
   isInited = true;
