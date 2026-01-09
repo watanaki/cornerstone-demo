@@ -31,7 +31,7 @@ export const initCornerstone = async (options?: InitOptions) => {
   }
 
   segmentation.config.style.setStyle({ type: csToolEnums.SegmentationRepresentations.Labelmap }, {
-    fillAlpha: 0.5,
+    fillAlpha: 1,
     renderOutline: false,
     fillAlphaInactive: 1,
   });
